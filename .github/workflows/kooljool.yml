@@ -1,0 +1,58 @@
+name: API Load Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  load_test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    - name: Start API and Nginx
+      run: docker-compose up -d
+
+    - name: Install ngrok
+      run: |
+        wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+        unzip ngrok-stable-linux-amd64.zip
+        sudo mv ngrok /usr/local/bin
+
+    - name: Start ngrok
+      run: |
+        ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+        ngrok http 80 > ngrok.log &
+        sleep 10
+        NGROK_URL=$(cat ngrok.log | grep -o 'https://.*\.ngrok\.io')
+        echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+
+    - name: Install k6
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Update load_test.js with ngrok URL
+      run: |
+        sed -i 's|http://localhost|'"$NGROK_URL"'|g' load_test.js
+        sed -i 's|http://localhost|'"$NGROK_URL"'|g' rate_limit_test.js
+
+    - name: Run load test
+      run: k6 run load_test.js
+
+    - name: Run rate limit test
+      run: k6 run rate_limit_test.js
+
+    - name: Stop Docker Compose
+      run: docker-compose down
