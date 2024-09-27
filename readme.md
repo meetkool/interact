@@ -15,7 +15,7 @@ curl http://localhost
 GET /health: Returns the current status of the AP
 
 ```
-curl http://localhost
+curl http://localhost/health
 ```
 
 
@@ -45,7 +45,7 @@ for proxy build
   nginx:
     image: nginx:latest
 ```
-
+---
 
 3.  Rate limiting configuration and explanation
 the rate limit configuration is set in the flask_limiter modul file a basic limit of 100 requests per minute is set.
@@ -57,7 +57,7 @@ limiter = Limiter(
 ```
 
 i used flask_limiter becouse it is easy to use and it is easy to implement.
-
+---
 4. Nginx Configuration Explanation
 
 The following Nginx configuration sets up a reverse proxy for our API:
@@ -83,7 +83,7 @@ server {
 
 This configuration does the following:
 
-- `listen 80;`: Nginx listens on port 80 for incoming HTTP requests.
+- `listen 80;`: nginx listing to 80 
 - `server_name localhost;`: This server block applies to requests for 'localhost'.
 - `access_log /var/log/nginx.access_log main;`: Logs access information to the specified file.
 
@@ -104,10 +104,10 @@ Setting these paths is crucial because:
 
 1. It ensures Nginx has a designated place to store temporary files and  permission issues.
 2. It allows you to control where these temporary files are stored, which can be important for security and performance reasons.
-
+---
 6. Load test results and analysis
 In this project, I used k6 for load testing. Here's an explanation of the k6 script:
-
+```
 import http from 'k6/http';
 import { sleep, check } from 'k6';
 
@@ -160,7 +160,7 @@ export function handleSummary(data) {
   };
 }
 
-
+```
 
 1. The test runs in stages, gradually increasing the number of virtual users from 20 to 100 and then back to 0.
 2. The test checks for HTTP request failures and response times.
