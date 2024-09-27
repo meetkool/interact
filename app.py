@@ -10,7 +10,6 @@ limiter = Limiter(
 
 swagger = Swagger(app)
 
-# Swagger UI is available at: http://localhost:5000/apidocs/
 
 @app.route('/', methods=['GET'])
 @limiter.limit("100 per minute")
